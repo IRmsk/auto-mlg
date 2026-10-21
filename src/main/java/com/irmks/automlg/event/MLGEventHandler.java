@@ -60,10 +60,9 @@ public class MLGEventHandler {
                     .computeIfAbsent(level, k -> new HashMap<>())
                     .put(waterPos.immutable(), level.getGameTime());
             AutoMLG.LOGGER.debug("AutoMLG: placed water at {} for {}", waterPos, player.getName().getString());
+            // 取消坠落伤害（放水成功才取消）
+            event.setCanceled(true);
         }
-
-        // 取消坠落伤害（放水也会减伤，但直接取消确保万无一失）
-        event.setCanceled(true);
     }
 
     @SubscribeEvent
@@ -74,6 +73,10 @@ public class MLGEventHandler {
 
         Map<BlockPos, Long> waters = pendingRemoval.get(event.level);
         if (waters == null || waters.isEmpty()) {
+            // 空了就删掉这个 Level 的键，防止内存泄漏
+            if (waters != null && waters.isEmpty()) {
+                pendingRemoval.remove(event.level);
+            }
             return;
         }
 
